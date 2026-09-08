@@ -44,12 +44,15 @@ One TDD, one track. A project with a global standards doc and per-page sprint do
 
 Start with `/clickup` when work originates from a ClickUp task (it ingests the task and routes to /clarify or /fix). Start with `/figma` when building from a Figma design. Skip both if working from text requirements only.
 
+Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides assumptions. It interviews you one decision at a time, dependencies first, and writes the resolved decisions back into the plan.
+
 ### Standalone Commands
 
 ```
 /brainstorm  — Decompose a TDD into a roadmap of phases and PRDs (outer loop)
 /clickup     : Ingest a ClickUp task (title, description, mockups, comments, subtasks) OR act on one (add comment, change status, log time) via MCP
 /figma       — Extract design context from Figma (via MCP)
+/grill-me    : Interrogate a plan, PRD, or spec branch by branch until shared understanding
 /fix         — Bug fixing with first-principles Root Cause Analysis
 /assess      — First-principles verification against requirements and standards
 /compare     — Visual comparison of code vs Figma screenshots
@@ -66,6 +69,7 @@ Start with `/clickup` when work originates from a ClickUp task (it ingests the t
 | ClickUp → Bug | `/clickup` | /clickup → /fix → /assess |
 | Figma → Feature | `/figma` | /figma → /clarify → /plan → /execute → /compare → /assess → /fix |
 | Feature Development | `/clarify` | /clarify → /plan → /execute → /assess → /fix |
+| Pressure-test a plan | `/grill-me` | after /plan, before /execute |
 | Bug Fixing | `/fix` | standalone with first-principles RCA |
 | Assessment | `/assess` | standalone or after /execute |
 | Visual Comparison | `/compare` | after /execute when Figma screenshots exist |
@@ -83,6 +87,7 @@ Start with `/clickup` when work originates from a ClickUp task (it ingests the t
 | `/figma` | Extract design context from Figma via MCP | Figma URL(s) | `design-context.md` + screenshots |
 | `/clarify` | Define requirements, research, challenge user | User request | `clarify.md` |
 | `/plan` | Technical specification with per-file decisions | `clarify.md` | `plan.md` |
+| `/grill-me` | Interrogate a plan decision by decision, dependencies first, until shared understanding | `plan.md` / `clarify.md` / a roadmap PRD | `grill-log.md` + amendments to the target |
 | `/execute` | Build all files in-context with full visibility | `plan.md` | code files + `execution-log.md` |
 | `/compare` | Visual comparison of code vs Figma screenshots | `selectors.json` + Figma screenshots | `comparison-report.md` |
 | `/assess` | First-principles verification (requirements + standards + integration) | `execution-log.md` + `clarify.md` | `assessment-report.md` |
@@ -133,6 +138,7 @@ It reads the file list from `execution-log.md` and confirms every section is rea
       design-context.md      <- /figma output (structured design specs)
       clarify.md             <- /clarify output
       plan.md                <- /plan output
+      grill-log.md           <- /grill-me output (resolved decisions, open questions)
       execution-log.md       <- /execute output
       selectors.json         <- /execute output (section->CSS selector map)
       sections.json          <- /figma output (canonical section names + node IDs)

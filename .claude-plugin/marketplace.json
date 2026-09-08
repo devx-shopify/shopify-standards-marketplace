@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Shopify development standards — skills, commands, and agents for theme, app, and performance development",
-    "version": "1.4.0"
+    "version": "1.5.0"
   },
   "plugins": [
     {
       "name": "shopify-theme-toolkit",
       "source": "./shopify-theme-toolkit",
       "description": "Shopify theme development plugin with workflow orchestration — skills, commands, and agents for Liquid, CSS, JS, schema, and section standards",
-      "version": "3.4.0",
+      "version": "3.5.0",
       "author": {
         "name": "Aditya Pasikanti"
       },
