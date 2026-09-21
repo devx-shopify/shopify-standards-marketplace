@@ -1,0 +1,11 @@
+{
+  "name": "second-brain",
+  "description": "Shopify theme development pipeline adapted to run as a Slack-resident teammate via Claude Tag. Fork of shopify-theme-toolkit: same clarify -> plan -> execute -> assess -> fix flow, same standards skills and agents, with every skill model-invocable from natural-language requests, execute restricted to the pipeline, and artifacts committed to the working branch so work survives sandbox turnover. Includes /grill-me, two-way ClickUp via /clickup, design intake via /figma, and roadmap decomposition via /brainstorm.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Aditya Pasikanti"
+  },
+  "repository": "https://github.com/shopify-claude-devx/shopify-standards-marketplace",
+  "license": "MIT",
+  "keywords": ["shopify", "theme", "liquid", "slack", "claude-tag", "workflow"]
+}
