@@ -1,7 +1,7 @@
 {
   "name": "pilot",
   "description": "Pilot plugin to use independent features of claude",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": {
     "name": "Aditya Pasikanti"
   }
