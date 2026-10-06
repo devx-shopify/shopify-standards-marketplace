@@ -20,17 +20,6 @@
       "category": "development"
     },
     {
-      "name": "second-brain",
-      "source": "./second-brain",
-      "description": "Shopify theme pipeline adapted for Claude Tag: model-invocable skills, pipeline-only execute, artifacts committed to the branch. Fork of shopify-theme-toolkit.",
-      "version": "0.1.0",
-      "author": {
-        "name": "Aditya Pasikanti"
-      },
-      "keywords": ["shopify", "theme", "liquid", "slack", "claude-tag", "workflow"],
-      "category": "development"
-    },
-    {
       "name": "shopify-app-standards",
       "source": "./shopify-app-standards",
       "description": "TypeScript, Remix, Prisma, Shopify API, and Polaris standards for Shopify apps"
