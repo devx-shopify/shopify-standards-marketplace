@@ -5,3 +5,7 @@
 node_modules/
 package-lock.json
 */skills/*/scripts/package.json
+# Committed on purpose: these skills install their own dependencies from these files
+!shopify-theme-toolkit/skills/preflight/scripts/package.json
+!shopify-theme-toolkit/skills/preflight/scripts/package-lock.json
+!shopify-theme-toolkit/skills/perf-scan/scripts/package.json
