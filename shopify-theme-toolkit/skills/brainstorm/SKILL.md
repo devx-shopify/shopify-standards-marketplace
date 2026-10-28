@@ -1,8 +1,8 @@
 ---
 name: brainstorm
 description: >
-  Brainstorm a whole Shopify theme project from its TDD (docs/tdd.md) into one
-  layered roadmap: foundation, shared components, shared sections, one phase
+  Brainstorm a whole Shopify theme project from its TDD (a Google Doc link,
+  snapshotted to docs/tdd.md) into one layered roadmap: foundation, shared components, shared sections, one phase
   per page, and integration. Builds a page inventory and a section reuse
   matrix so shared work is specified once, writes self-contained PRDs to
   docs/roadmap/, then has fresh-context reviewers check every PRD before
@@ -10,7 +10,7 @@ description: >
   developer says "brainstorm", "break this project down", "create a roadmap"
   or "plan this project". A single page or feature skips brainstorm and goes
   straight to the feature pipeline.
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, WebSearch, WebFetch, Agent, TaskCreate, TaskUpdate, TaskList
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, WebSearch, WebFetch, Agent, TaskCreate, TaskUpdate, TaskList, mcp__claude_ai_Google_Drive__read_file_content, mcp__claude_ai_Google_Docs__read_doc
 ---
 
 # Brainstorm: Project Decomposition into a Layered Roadmap
@@ -23,8 +23,11 @@ You are entering the Brainstorm phase. Your job is to take a project's TDD, thin
 
 ## Input
 
-- The TDD: `docs/tdd.md`. **Required.** It is the Markdown export of the project's Google Doc.
+- The TDD's **Google Doc link**, in `$ARGUMENTS` or the conversation. **Required** on the first run. The TDD is written in Claude web or Cowork as a Google Doc, and the Doc is the source of truth.
+- On later runs, the link stored in `docs/roadmap/README.md` (`**TDD source:**`) is used when no new link is given.
 - Optional notes from the developer: `$ARGUMENTS`
+
+You save a text snapshot of the Doc to `docs/tdd.md`. The fresh-context reviewers have no Google access and read the TDD from that file, and the snapshot records which version of the TDD the roadmap was built from.
 
 ## Fixed layout
 
@@ -32,7 +35,7 @@ One project, one TDD, one roadmap:
 
 ```
 docs/
-  tdd.md                          exported Google Doc (never edited by this skill)
+  tdd.md                          snapshot of the TDD Google Doc (refreshed each run)
   roadmap/
     README.md                     page inventory, section reuse matrix, phase tree,
                                   execution order, TDD updates needed, open review findings
@@ -53,22 +56,35 @@ docs/
 
 ---
 
-## Step 0: Confirm This Is a Project
+## Step 0: Confirm This Is a Project and Snapshot the TDD
 
 1. If the request is a single page, section or feature, stop and say so:
    > Brainstorm is for whole projects. For a single page or feature, go straight to the pipeline: `/figma-rest` (if there is a design) → `/clarify` → `/plan` → `/execute` → `/figma-verify` → `/assess`.
-2. `Glob('docs/tdd.md')`. If it is missing:
-   - If the developer pasted the TDD into the conversation, offer to save it to `docs/tdd.md` exactly as pasted, then continue from that file.
-   - Otherwise stop and ask the developer to export the project's TDD Google Doc as Markdown to `docs/tdd.md`, or paste it here.
-   Do not brainstorm without it.
+2. **Find the TDD link.** Use the Google Doc link the developer gave. If none was given, read `**TDD source:**` from `docs/roadmap/README.md`. If there is neither, ask for the link. Take the document ID from the URL: the part after `/document/d/`, up to the next `/`.
+
+3. **Read the Doc** through the Google connector:
+   - Prefer `mcp__claude_ai_Google_Drive__read_file_content` with the document ID. It returns the Doc as readable text.
+   - If that tool is not available, use `mcp__claude_ai_Google_Docs__read_doc` and convert its JSON to Markdown: heading styles to `#` levels, lists to `-` items, tables to Markdown tables, links kept as URLs.
+   - If neither works (connector not set up, no access to the Doc), tell the developer what failed and ask them to share the Doc with the connected Google account, or paste the TDD into the conversation. Do not brainstorm without the TDD.
+
+4. **Note what the text cannot carry.** Diagrams, drawings and images do not come through as text. List every diagram you can detect (an image, a drawing, or a caption that refers to one) and tell the developer: any fact that exists only in a diagram is invisible to brainstorm and the reviewers. Those facts go in **TDD updates needed**, so the Doc states them in text too. Mermaid source written as text in the Doc is kept and can be read.
+
+5. **Compare with the previous snapshot.** If `docs/tdd.md` already exists, compare the new text with it before overwriting, and summarize which sections changed. When revising a roadmap, that summary decides which phases and PRDs to revisit.
+
+6. **Write the snapshot** to `docs/tdd.md`: this header, then the Doc's text.
+   ```
+   > Snapshot of the TDD Google Doc: {link}
+   > Taken {YYYY-MM-DD}. Edit the Google Doc, not this file. /brainstorm refreshes it.
+   ```
+   A TDD pasted into the conversation instead of a link is saved the same way, with `pasted in conversation` in place of the link.
 
 ---
 
 ## Step 1: Absorb the TDD and the Theme
 
-1. **Read `docs/tdd.md` in full.** It is the source of truth for project-wide decisions. Note what it decides, what it implies, and what it leaves open.
+1. **Read `docs/tdd.md` in full.** It holds the TDD, the source of truth for project-wide decisions. Note what it decides, what it implies, and what it leaves open.
 
-2. **Treat the TDD as read-only.** Never edit `docs/tdd.md`. It is a copy of a Google Doc and the next export overwrites it. When brainstorming decides something the TDD does not cover, or contradicts it, record it for the **TDD updates needed** list in the roadmap README. The developer updates the Google Doc and re-exports.
+2. **Treat the TDD as read-only.** Never edit the Google Doc, and never change `docs/tdd.md` other than refreshing the snapshot in Step 0. When brainstorming decides something the TDD does not cover, or contradicts it, record it for the **TDD updates needed** list in the roadmap README. The developer updates the Google Doc, and the next run picks up the change.
 
 3. **Check for an existing roadmap.** `Glob('{ROADMAP}/README.md')`. If found, read it:
    - If any phase is still marked `PRDs pending`, offer to **resume**: skip to Step 4 at the first pending phase.
@@ -144,7 +160,7 @@ After each answer, state back what you understood and what it changes in the str
 
 ### Structure review
 
-Before Gate 1, write a draft `{ROADMAP}/README.md` from the template with the page inventory, the reuse matrix (PRD column `pending`), the phase list with every phase marked `PRDs pending`, and any TDD updates found so far.
+Before Gate 1, write a draft `{ROADMAP}/README.md` from the template with the TDD source link and snapshot date, the page inventory, the reuse matrix (PRD column `pending`), the phase list with every phase marked `PRDs pending`, and any TDD updates found so far.
 
 Dispatch one reviewer with `Check: structure` (see Step 9a for how to dispatch), giving it only the README and TDD paths. Fix clear-cut findings; bring design questions to the developer. Present the remaining findings at Gate 1.
 
@@ -302,7 +318,7 @@ Tell the developer:
 - the roadmap is in `docs/roadmap/`, with the count of phases and PRDs
 - the file tree of what was created
 - the review result: reviewers dispatched, rounds run, findings fixed, findings still open
-- the **TDD updates needed** list, so they can update the Google Doc and re-export it
+- the **TDD updates needed** list (including diagram-only facts), so they can update the Google Doc
 - that `status-log.md` starts with every PRD at `Not Started`
 
 Then:
@@ -326,12 +342,12 @@ Without a design:
 
 ### Scope
 - Whole projects only. Single pages and features go to the pipeline.
-- `docs/tdd.md` is required and read-only. Gaps and contradictions go in **TDD updates needed**.
+- The TDD Google Doc is required and is the source of truth. `docs/tdd.md` is only its snapshot, refreshed at the start of every run and otherwise never edited. Gaps, contradictions and diagram-only facts go in **TDD updates needed**.
 
 ### Brainstorming
 - Research before asking. No generic questionnaires.
 - One dimension at a time, and state back what you understood after each answer.
-- Write no files before the structure review. Until PRD generation, write only `docs/tdd.md` (a pasted TDD, with permission) and the README.
+- Write no files before the structure review except the `docs/tdd.md` snapshot. Until PRD generation, write only that snapshot and the README.
 
 ### Structure
 - Layers in this order: foundation, shared components, shared sections, pages, integration.

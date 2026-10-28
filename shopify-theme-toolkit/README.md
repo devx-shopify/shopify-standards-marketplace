@@ -29,10 +29,10 @@ Restart Claude Code and type `/shopify-theme-toolkit:clarify` — if it responds
 ### Project Pipeline (Outer Loop)
 
 ```
-docs/tdd.md → /brainstorm → docs/roadmap/ → one PRD at a time → the feature pipeline below
+TDD Google Doc link → /brainstorm → docs/roadmap/ → one PRD at a time → the feature pipeline below
 ```
 
-`/brainstorm` is for whole projects only. It reads the project's single TDD (the Google Doc exported to `docs/tdd.md`) and writes one layered roadmap to `docs/roadmap/`: foundation, shared components, shared sections, one phase per page, and integration. A section reuse matrix makes sure anything used on two or more pages is specified once. Fresh-context `prd-reviewer` agents check every PRD before handover, and the README lists any **TDD updates needed** so the Google Doc stays the source of truth. Each PRD then goes through the feature pipeline on its own.
+`/brainstorm` is for whole projects only. It reads the project's single TDD straight from its Google Doc link (written in Claude web or Cowork), saves a text snapshot to `docs/tdd.md` for the reviewers, and writes one layered roadmap to `docs/roadmap/`: foundation, shared components, shared sections, one phase per page, and integration. A section reuse matrix makes sure anything used on two or more pages is specified once. Fresh-context `prd-reviewer` agents check every PRD before handover, and the README lists any **TDD updates needed** so the Google Doc stays the source of truth. Each PRD then goes through the feature pipeline on its own.
 
 One project, one TDD, one roadmap. A single page or feature skips `/brainstorm` and starts at the feature pipeline.
 
@@ -98,7 +98,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 
 | Skill | Purpose | Input Artifact | Output Artifact |
 |-------|---------|----------------|-----------------|
-| `/brainstorm` | Decompose a whole project into a layered roadmap of reviewed, self-contained PRDs | `docs/tdd.md` | `docs/roadmap/`: PRDs, `README.md`, `status-log.md` |
+| `/brainstorm` | Decompose a whole project into a layered roadmap of reviewed, self-contained PRDs | TDD Google Doc link | `docs/tdd.md` snapshot + `docs/roadmap/`: PRDs, `README.md`, `status-log.md` |
 | `/clickup` | Ingest a ClickUp task (route to /clarify or /fix), or act on one (comment, status, time) via MCP | ClickUp task ID / URL, or an instruction | `clickup-context.md` + `clickup-images/` (ingest), or a ClickUp write (action) |
 | `/figma-rest` | Extract design context from Figma via the REST API (personal access token, no MCP quota) | Figma URL(s) or a Dev Mode prompt | `design-context.md` + `sections.json` + `figma-dumps/` + screenshots + assets |
 | `/figma` | Extract design context from Figma via MCP | Figma URL(s) | `design-context.md` + screenshots |

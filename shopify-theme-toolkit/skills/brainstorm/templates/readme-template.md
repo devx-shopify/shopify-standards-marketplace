@@ -1,7 +1,8 @@
 # {Project Name}: Roadmap
 
 **Generated:** {date}
-**TDD:** `docs/tdd.md`
+**TDD source:** {Google Doc link}
+**TDD snapshot:** `docs/tdd.md`, taken {YYYY-MM-DD}
 **Total phases:** {phase-count}
 **Total PRDs:** {prd-count}
 
@@ -53,7 +54,9 @@ Delivery status lives in `status-log.md`, not here.
 
 ## TDD Updates Needed
 
-Decisions made during brainstorming that the TDD does not contain or contradicts. Update the Google Doc, then re-export it to `docs/tdd.md`.
+Decisions made during brainstorming that the TDD does not contain or contradicts. Update the Google Doc; the next `/brainstorm` run refreshes `docs/tdd.md` from it.
+
+Diagram-only facts (shown in a diagram but not written in text) are listed here too, because brainstorm and the reviewers read only text.
 
 | Decision | Why | TDD section |
 |----------|-----|-------------|

@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.8.0
+
+### Changed
+- **`/brainstorm` reads the TDD from its Google Doc link.** The TDD is written in Claude web or Cowork; pass the link and brainstorm reads it through the Google Drive or Google Docs connector. No manual Markdown export.
+  - It saves a text snapshot to `docs/tdd.md` with a header naming the link and date, because the `prd-reviewer` agents have no Google access and the snapshot records which TDD version the roadmap came from.
+  - The link is stored in the roadmap README (`**TDD source:**`), so later runs refresh the snapshot without asking. On a re-run, it summarizes which TDD sections changed since the last snapshot.
+  - Diagrams don't come through as text, so brainstorm lists the diagrams it detects and puts diagram-only facts in **TDD updates needed**.
+  - If the connector can't read the Doc, it asks for access or a pasted TDD.
+
 ## 3.7.0
 
 ### Changed
