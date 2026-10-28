@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.9.0
+
+### Added
+- **`/shopify-tdd`**: writes or updates the one TDD for a whole storefront project as a devx-styled Google Doc (built in Claude web, works in Claude web, Cowork and Code).
+  - Fixed 11-section template with IDs (pages P-n, components C-n, shared sections S-n, DEC-n, Q-n) and a draft section reuse matrix.
+  - Reads the brief, Figma, theme repo and call notes first, then interviews only about gaps; never invents facts.
+  - Diagrams drawn with Excalidraw; the Doc gets a `DIAGRAM n` placeholder plus a facts table, because the Drive connector can't carry images and public renderers would leak client data. In Claude Code, `render_diagram.py` renders the PNGs locally with Pillow.
+  - `md_to_html.py` checks the Markdown and converts it with real heading styles; `doc_info.py` fixes and checks the Doc's styling after upload.
+  - Fresh-context review before handover, and in-place updates that keep the link.
+
+### Changed
+- **`/brainstorm` understands `/shopify-tdd` output**: it starts from the TDD's page inventory, IDs and reuse matrix, treats `DIAGRAM n` facts tables as the diagram in text, and handles the Drive text quirk where each table's real header is the first bold row.
+- **`/brainstorm` writes the TDD snapshot with a script** (`scripts/snapshot_tdd.py`) instead of retyping it, so large TDDs work: the connector saves big reads to a file and the script cleans them (escapes, empty-header tables, bold-text headings, stray bold markers), adds the header, flags `DIAGRAM` placeholders without facts and counts images per tab from `read_doc`. Tested on a real 6-tab, 136K-character TDD: 112 tables and 150 headings fixed, nothing left escaped.
+
 ## 3.8.0
 
 ### Changed

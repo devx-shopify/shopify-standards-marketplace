@@ -29,7 +29,7 @@ Restart Claude Code and type `/shopify-theme-toolkit:clarify` — if it responds
 ### Project Pipeline (Outer Loop)
 
 ```
-TDD Google Doc link → /brainstorm → docs/roadmap/ → one PRD at a time → the feature pipeline below
+/shopify-tdd (Claude web, Cowork or Code) → TDD Google Doc link → /brainstorm → docs/roadmap/ → one PRD at a time → the feature pipeline below
 ```
 
 `/brainstorm` is for whole projects only. It reads the project's single TDD straight from its Google Doc link (written in Claude web or Cowork), saves a text snapshot to `docs/tdd.md` for the reviewers, and writes one layered roadmap to `docs/roadmap/`: foundation, shared components, shared sections, one phase per page, and integration. A section reuse matrix makes sure anything used on two or more pages is specified once. Fresh-context `prd-reviewer` agents check every PRD before handover, and the README lists any **TDD updates needed** so the Google Doc stays the source of truth. Each PRD then goes through the feature pipeline on its own.
@@ -53,6 +53,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 ### Standalone Commands
 
 ```
+/shopify-tdd : Write or update a whole storefront project's TDD as a styled Google Doc, ready for /brainstorm
 /brainstorm  : Decompose a whole project's TDD into one layered roadmap of reviewed PRDs (outer loop)
 /clickup     : Ingest a ClickUp task (title, description, mockups, comments, subtasks) OR act on one (add comment, change status, log time) via MCP
 /figma-rest  — Extract design context from Figma over the REST API (no MCP quota)
@@ -75,7 +76,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 
 | Use Case | Entry Point | Flow |
 |----------|-------------|------|
-| Whole project from a TDD | `/brainstorm` | /brainstorm → then the feature pipeline per PRD |
+| Whole project from a TDD | `/shopify-tdd` | /shopify-tdd → /brainstorm → then the feature pipeline per PRD |
 | ClickUp → Feature | `/clickup` | /clickup → /clarify → /plan → /execute → /assess |
 | ClickUp → Bug | `/clickup` | /clickup → /fix → /assess |
 | Figma → Feature | `/figma-rest` | /figma-rest → /clarify → /plan → /execute → /figma-verify → /assess → /fix |
@@ -98,6 +99,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 
 | Skill | Purpose | Input Artifact | Output Artifact |
 |-------|---------|----------------|-----------------|
+| `/shopify-tdd` | Write or update the project's one TDD as a devx-styled Google Doc, with Excalidraw diagrams, fact tables brainstorm can read, and a fresh-context review | Brief / PRD, Figma, theme repo, call notes | TDD Google Doc (+ local diagram PNGs in Claude Code) |
 | `/brainstorm` | Decompose a whole project into a layered roadmap of reviewed, self-contained PRDs | TDD Google Doc link | `docs/tdd.md` snapshot + `docs/roadmap/`: PRDs, `README.md`, `status-log.md` |
 | `/clickup` | Ingest a ClickUp task (route to /clarify or /fix), or act on one (comment, status, time) via MCP | ClickUp task ID / URL, or an instruction | `clickup-context.md` + `clickup-images/` (ingest), or a ClickUp write (action) |
 | `/figma-rest` | Extract design context from Figma via the REST API (personal access token, no MCP quota) | Figma URL(s) or a Dev Mode prompt | `design-context.md` + `sections.json` + `figma-dumps/` + screenshots + assets |

@@ -63,26 +63,31 @@ docs/
 2. **Find the TDD link.** Use the Google Doc link the developer gave. If none was given, read `**TDD source:**` from `docs/roadmap/README.md`. If there is neither, ask for the link. Take the document ID from the URL: the part after `/document/d/`, up to the next `/`.
 
 3. **Read the Doc** through the Google connector:
-   - Prefer `mcp__claude_ai_Google_Drive__read_file_content` with the document ID. It returns the Doc as readable text.
-   - If that tool is not available, use `mcp__claude_ai_Google_Docs__read_doc` and convert its JSON to Markdown: heading styles to `#` levels, lists to `-` items, tables to Markdown tables, links kept as URLs.
-   - If neither works (connector not set up, no access to the Doc), tell the developer what failed and ask them to share the Doc with the connected Google account, or paste the TDD into the conversation. Do not brainstorm without the TDD.
+   - Read the text with `mcp__claude_ai_Google_Drive__read_file_content` and the document ID. A large TDD does not fit inline: the tool saves the result to a file and gives you its path. **Never retype the Doc yourself.** If the result came back inline instead, save that tool output as-is to a scratch file.
+   - Also call `mcp__claude_ai_Google_Docs__read_doc` with the same ID, only to count images and drawings. Its result is always large and saved to a file; do not read it, pass its path to the script below. Skip this if the Docs connector is not available.
+   - If the Drive read does not work (connector not set up, no access to the Doc), tell the developer what failed and ask them to share the Doc with the connected Google account, or paste the TDD into the conversation (save the paste to a scratch file the same way). Do not brainstorm without the TDD.
 
-4. **Note what the text cannot carry.** Diagrams, drawings and images do not come through as text. List every diagram you can detect (an image, a drawing, or a caption that refers to one) and tell the developer: any fact that exists only in a diagram is invisible to brainstorm and the reviewers. Those facts go in **TDD updates needed**, so the Doc states them in text too. Mermaid source written as text in the Doc is kept and can be read.
-
-5. **Compare with the previous snapshot.** If `docs/tdd.md` already exists, compare the new text with it before overwriting, and summarize which sections changed. When revising a roadmap, that summary decides which phases and PRDs to revisit.
-
-6. **Write the snapshot** to `docs/tdd.md`: this header, then the Doc's text.
+4. **Write the snapshot with the script**, never by hand. It cleans the Drive text (escapes, table headers, bold-text headings), adds the snapshot header and reports tabs, tables, `DIAGRAM` placeholders without a facts table, and images per tab:
+   ```bash
+   python3 "${CLAUDE_SKILL_DIR}/scripts/snapshot_tdd.py" <saved Drive read> --link "<Doc link>" --doc-json <saved read_doc file> -o docs/tdd.md.new
    ```
-   > Snapshot of the TDD Google Doc: {link}
-   > Taken {YYYY-MM-DD}. Edit the Google Doc, not this file. /brainstorm refreshes it.
-   ```
-   A TDD pasted into the conversation instead of a link is saved the same way, with `pasted in conversation` in place of the link.
+   Write to `docs/tdd.md.new` first, then do step 6, then move it over `docs/tdd.md`. Use `--link "pasted in conversation"` for a pasted TDD, and leave out `--doc-json` when there is no `read_doc` file.
+
+5. **Note what the text cannot carry.** Diagrams, drawings and images do not come through as text. Use the script's report.
+   - A TDD written with `/shopify-tdd` marks each diagram as `DIAGRAM n: Name (paste the PNG here)` with a facts table right under it. That table is the diagram in text: use it. Only a placeholder with no facts table under it is a gap.
+   - For any other diagram you can detect (an image, a drawing, or a caption that refers to one), tell the developer that facts living only in the picture are invisible to brainstorm and the reviewers.
+   - Both kinds of gap go in **TDD updates needed**, so the Doc states those facts in text. Mermaid source written as text in the Doc is kept and can be read.
+   - Images reported by the script that have no `DIAGRAM` facts table near them are diagram-only facts.
+
+6. **Compare with the previous snapshot.** If `docs/tdd.md` already exists, compare it with `docs/tdd.md.new` (for example `diff` on the `#`/`##` headings, then on the changed sections) and summarize which sections changed. When revising a roadmap, that summary decides which phases and PRDs to revisit. Then move `docs/tdd.md.new` over `docs/tdd.md`.
+
+7. **Read the snapshot** in chunks with `Read` (offset and limit) until you have read all of it. A large TDD can be over 100K characters; say so if any part could not be read.
 
 ---
 
 ## Step 1: Absorb the TDD and the Theme
 
-1. **Read `docs/tdd.md` in full.** It holds the TDD, the source of truth for project-wide decisions. Note what it decides, what it implies, and what it leaves open.
+1. **Use the snapshot you read in Step 0.** `docs/tdd.md` holds the TDD, the source of truth for project-wide decisions. Note what it decides, what it implies, and what it leaves open.
 
 2. **Treat the TDD as read-only.** Never edit the Google Doc, and never change `docs/tdd.md` other than refreshing the snapshot in Step 0. When brainstorming decides something the TDD does not cover, or contradicts it, record it for the **TDD updates needed** list in the roadmap README. The developer updates the Google Doc, and the next run picks up the change.
 
@@ -119,6 +124,8 @@ Research before asking questions, so you bring informed trade-offs instead of a 
 ## Step 3: Page Inventory and Section Reuse Matrix
 
 This step decides what is shared and what belongs to one page. It prevents the same section from being specified more than once.
+
+A TDD written with `/shopify-tdd` already has a page inventory (P1, P2...), components (C1...), shared sections (S1...) and a draft section reuse matrix. Start from those and keep their IDs in the README, so PRDs and the TDD use the same names. Verify them against the designs and the theme instead of rebuilding them, and send any correction to **TDD updates needed**.
 
 ### 3a. Page inventory
 
