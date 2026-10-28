@@ -1,10 +1,9 @@
-# Status Log — {Track Name}
+# Status Log: {Project Name}
 
 **Created:** {YYYY-MM-DD}
-**Tracks:** {N} PRDs across {M} phases
-**Gate:** `DEFINITION-OF-DONE.md`
+**PRDs:** {N} across {M} phases
 
-Living document. Update it as each PRD moves, not in a batch at the end — the value
+Living document. Update it as each PRD moves, not in a batch at the end. The value
 here is the record of what actually happened, which nobody can reconstruct afterwards.
 
 ---
@@ -16,12 +15,12 @@ One section per phase, one row per PRD. **Status must be one of:**
 
 Any other value renders as "Not started" on the docs board.
 
-### Phase {N} — {Phase Name}
+### Phase {N} - {Phase Name}
 
 | # | PRD | Depends on | Status | Date | Notes |
 |---|-----|-----------|--------|------|-------|
-| 1 | {N.1} {kebab-slug} | — | Not Started | — | — |
-| 2 | {N.2} {kebab-slug} | {N.1} | Not Started | — | — |
+| 1 | {N.1} {kebab-slug} | - | Not Started | - | - |
+| 2 | {N.2} {kebab-slug} | {N.1} | Not Started | - | - |
 
 [Repeat one `###` section per phase, numbered in execution order.]
 

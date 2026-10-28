@@ -8,8 +8,10 @@
 //   docs/*.md                                  -> core documents
 //   docs/<roadmap>/phase-<N>-<slug>/overview.md  -> phase title
 //   docs/<roadmap>/phase-<N>-<slug>/X.Y-*.md     -> specification cards
-//   docs/<roadmap>/status-log.md with entries    -> delivery status (source of truth)
-//     ## YYYY-MM-DD — X.Y Title — ✅ Complete
+//   docs/<roadmap>/status-log.md                 -> delivery status (source of truth)
+//     "## PRD Tracker" table rows (from /brainstorm), status one of
+//       Not Started | In Progress | Blocked | Done | Done with deviations
+//     or older entry headings (date, X.Y Title, status separated by em dashes), see parseStatusLog
 
 import { createServer } from "node:http";
 import { readFile, readdir } from "node:fs/promises";
@@ -21,7 +23,7 @@ const ASSETS = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = process.cwd();
 const DOCS = process.env.DOCS_DIR ? path.resolve(process.env.DOCS_DIR) : path.join(ROOT, "docs");
 const PORT = Number(process.env.DOCS_VIEWER_PORT || 4488);
-// One roadmap folder per track. Point at another with ROADMAP_DIR=roadmap-pdp.
+// /brainstorm writes docs/roadmap/. Point at another folder with ROADMAP_DIR.
 const ROADMAP = (process.env.ROADMAP_DIR || "roadmap").replace(/^\/+|\/+$/g, "");
 
 // ---------- project name ----------
@@ -100,10 +102,82 @@ function phaseTitleFromOverview(md, fallback) {
   return h1.replace(/^Phase \d+:\s*/, "").trim();
 }
 
+// /brainstorm's status log: a "## PRD Tracker" section of tables, plus other
+// tables (deviations, blockers) whose PRD column names the spec they belong to.
+const TRACKER_STATUS = {
+  "not started": "not_started",
+  "in progress": "in_progress",
+  "blocked": "blocked",
+  "done": "complete",
+  "done with deviations": "complete",
+};
+
+function tableRows(lines) {
+  // returns [{ header (lowercased), labels, rows: [[...]], section }] for every markdown table
+  const tables = [];
+  let section = "";
+  for (let i = 0; i < lines.length; i++) {
+    const h2 = lines[i].match(/^## (.+)$/);
+    if (h2) section = h2[1].trim();
+    if (!lines[i].trim().startsWith("|") || !/^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] ?? "")) continue;
+    const cells = (l) => l.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+    const labels = cells(lines[i]);
+    const header = labels.map((c) => c.toLowerCase());
+    const rows = [];
+    let j = i + 2;
+    for (; j < lines.length && lines[j].trim().startsWith("|"); j++) rows.push(cells(lines[j]));
+    tables.push({ header, labels, rows, section });
+    i = j - 1;
+  }
+  return tables;
+}
+
+function parseTracker(md) {
+  const entries = {};
+  if (!md) return entries;
+  const extras = {};
+  for (const { header, labels, rows, section } of tableRows(md.split("\n"))) {
+    const prdCol = header.indexOf("prd");
+    if (prdCol < 0) continue;
+    const statusCol = header.indexOf("status");
+    for (const row of rows) {
+      const id = row[prdCol]?.match(/^(\d+\.\d+)\b/)?.[1];
+      if (!id) continue;
+      if (/prd tracker/i.test(section) && statusCol >= 0) {
+        const label = row[statusCol] ?? "";
+        const status = TRACKER_STATUS[label.toLowerCase()];
+        if (!status) continue;
+        const get = (name) => {
+          const v = row[header.indexOf(name)];
+          return v && v !== "-" && v !== "\u2014" ? v : null; // "-" or an em dash means empty
+        };
+        const date = get("date")?.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? null;
+        entries[id] = { id, status, statusText: label, date, notes: get("notes"), complete: status === "complete", body: "" };
+      } else {
+        (extras[id] ??= []).push({ section, labels, row });
+      }
+    }
+  }
+  for (const [id, entry] of Object.entries(entries)) {
+    const parts = [`**Status:** ${entry.statusText}` + (entry.date ? ` · ${entry.date}` : "")];
+    if (entry.notes) parts.push(entry.notes);
+    const bySection = {};
+    for (const x of extras[id] ?? []) (bySection[x.section] ??= []).push(x);
+    for (const [section, items] of Object.entries(bySection)) {
+      const { labels } = items[0];
+      parts.push(`### ${section}`, `| ${labels.join(" | ")} |`, `| ${labels.map(() => "---").join(" | ")} |`, ...items.map((x) => `| ${x.row.join(" | ")} |`));
+    }
+    entry.body = parts.join("\n\n").replace(/\|\n\n\|/g, "|\n|");
+  }
+  return entries;
+}
+
 async function readStatusLog() {
   const rel = `${ROADMAP}/status-log.md`;
   if (!existsSync(path.join(DOCS, rel))) return {};
-  return parseStatusLog(await readDoc(rel));
+  const md = await readDoc(rel);
+  // older entry headings win: they carry a full written entry for the spec
+  return { ...parseTracker(md), ...parseStatusLog(md) };
 }
 
 async function buildState() {
@@ -161,7 +235,8 @@ async function buildState() {
           priority: meta["priority"] ?? null,
           depends: meta["depends on"] ?? null,
           scope: meta["estimated scope"] ?? null,
-          status: entry?.complete ? "complete" : "not_started",
+          status: entry?.status ?? (entry?.complete ? "complete" : "not_started"),
+          statusText: entry?.statusText ?? null,
           completedDate: entry?.complete ? entry.date : null,
           hasLogEntry: Boolean(entry),
         });
@@ -178,6 +253,8 @@ async function buildState() {
     stats: {
       total: allPrds.length,
       complete: allPrds.filter((p) => p.status === "complete").length,
+      inProgress: allPrds.filter((p) => p.status === "in_progress").length,
+      blocked: allPrds.filter((p) => p.status === "blocked").length,
     },
   };
 }

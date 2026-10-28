@@ -25,7 +25,7 @@ You are entering the Grill phase. Your job is to interview the developer relentl
 Target and options: `$ARGUMENTS`
 
 Recognised options:
-- A file path (`docs/roadmap-pdp/02-variant-picker/prd.md`) grills that document
+- A file path (`docs/roadmap/phase-6-product/6.2-variant-picker.md`) grills that document
 - `--focus {area}` grills only the subtree touching that area (e.g. `--focus schema`)
 - `--depth quick|standard|deep` sets how hard to push. Default `standard`.
   - `quick`: root decisions and hard blockers only
@@ -42,7 +42,7 @@ Find the plan before asking a single question. Resolution order, first hit wins:
 2. A plan the developer just wrote or pasted in this conversation
 3. `.buildspace/current-feature`, then `.buildspace/artifacts/{feature-name}/plan.md`
 4. Same folder, `clarify.md`, if no plan exists yet
-5. `Glob('docs/roadmap-*/**/prd.md')` if the developer named a phase or PRD
+5. `Glob('docs/roadmap/phase-*/*.md')` if the developer named a phase or PRD
 6. If nothing resolves, ask what to grill. Do not invent a plan to grill.
 
 Read everything adjacent to the target that constrains it: `clarify.md`, `design-context.md`, `design-tokens.json`, `clickup-context.md`, the roadmap `README.md` for a PRD. A question already answered in a sibling artifact is a question you are not allowed to ask.

@@ -1,38 +1,73 @@
-# {Project Name} — Roadmap
+# {Project Name}: Roadmap
 
 **Generated:** {date}
+**TDD:** `docs/tdd.md`
 **Total phases:** {phase-count}
-**Total PRDs:** {leaf-prd-count}
+**Total PRDs:** {prd-count}
 
 ## Overview
 
-{3-5 sentences. What this project is, what problem it solves, who it's for.}
+{3-5 sentences from the TDD. What this project is, what problem it solves, who it's for.}
+
+## Page Inventory
+
+| Template | Purpose | New / Change | Figma |
+|----------|---------|--------------|-------|
+| {index} | {purpose} | {New} | {frame link or "None"} |
+
+## Section Reuse Matrix
+
+Anything on two or more pages lives in a shared layer and is specified once. The PRD column says `pending` until that phase is decomposed.
+
+| Section / snippet | {page} | {page} | {page} | Layer | PRD |
+|-------------------|--------|--------|--------|-------|-----|
+| {name} | x | x | | Shared sections | {3.1} |
 
 ## Phase Tree
 
 ```
-{ASCII tree showing full structure. Mark leaf nodes with [PRD].}
+{Mark every PRD with [PRD]. While brainstorming is in progress, mark phases
+that are not yet decomposed with "PRDs pending".}
 
-1. {Phase Name}
+1. Foundation
    1.1 {Name} ........................ [PRD]
-   1.2 {Name}
-       1.2.1 {Name} .................. [PRD]
-       1.2.2 {Name} .................. [PRD]
-2. {Phase Name}
+2. Shared Components
    2.1 {Name} ........................ [PRD]
+3. Shared Sections
+   3.1 {Name} ........................ [PRD]
+4. {Page}
+   4.1 {Name} ........................ [PRD]
+   4.2 {Page} template ............... [PRD]
+{N}. Integration
+   {N}.1 {Name} ...................... [PRD]
 ```
 
 ## Execution Order
 
-| Order | PRD | Path | Depends On | Can Parallel With | Status |
-|-------|-----|------|------------|-------------------|--------|
-| 1 | {name} | {path} | None | — | Not Started |
-| 2 | {name} | {path} | #1 | #3 | Not Started |
+Delivery status lives in `status-log.md`, not here.
+
+| Order | PRD | Path | Depends On | Can Parallel With |
+|-------|-----|------|------------|-------------------|
+| 1 | {name} | {path} | None | - |
+| 2 | {name} | {path} | #1 | #3 |
+
+## TDD Updates Needed
+
+Decisions made during brainstorming that the TDD does not contain or contradicts. Update the Google Doc, then re-export it to `docs/tdd.md`.
+
+| Decision | Why | TDD section |
+|----------|-----|-------------|
+| {decision} | {reason} | {section} |
+
+## Open Review Findings
+
+Findings from the fresh-context PRD review that were not resolved. Write "None" if every finding was fixed.
+
+| PRD | Finding | Severity |
+|-----|---------|----------|
 
 ## How to Use This Roadmap
 
-Each `.md` file marked [PRD] is a self-contained specification. Hand any PRD
-to a developer or AI development pipeline — it contains full context,
-requirements, approach, and acceptance criteria.
+Each file marked [PRD] is a self-contained specification. Hand PRDs to the pipeline one at a time, in the execution order above.
 
 **Start here:** `{path-to-first-prd}`

@@ -29,12 +29,12 @@ Restart Claude Code and type `/shopify-theme-toolkit:clarify` — if it responds
 ### Project Pipeline (Outer Loop)
 
 ```
-/brainstorm → docs/roadmap-{track}/ → one PRD at a time → the feature pipeline below
+docs/tdd.md → /brainstorm → docs/roadmap/ → one PRD at a time → the feature pipeline below
 ```
 
-`/brainstorm` turns a TDD into a track: a `docs/roadmap-{track}/` folder of phases, self-contained PRDs, a README with the execution order, and a `status-log.md` with every PRD at `Not Started`. Each PRD then goes through the feature pipeline on its own.
+`/brainstorm` is for whole projects only. It reads the project's single TDD (the Google Doc exported to `docs/tdd.md`) and writes one layered roadmap to `docs/roadmap/`: foundation, shared components, shared sections, one phase per page, and integration. A section reuse matrix makes sure anything used on two or more pages is specified once. Fresh-context `prd-reviewer` agents check every PRD before handover, and the README lists any **TDD updates needed** so the Google Doc stays the source of truth. Each PRD then goes through the feature pipeline on its own.
 
-One TDD, one track. A project with a global standards doc and per-page sprint docs gets one run of `/brainstorm` per document.
+One project, one TDD, one roadmap. A single page or feature skips `/brainstorm` and starts at the feature pipeline.
 
 ### Full Pipeline (Feature Development)
 
@@ -53,7 +53,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 ### Standalone Commands
 
 ```
-/brainstorm  — Decompose a TDD into a roadmap of phases and PRDs (outer loop)
+/brainstorm  : Decompose a whole project's TDD into one layered roadmap of reviewed PRDs (outer loop)
 /clickup     : Ingest a ClickUp task (title, description, mockups, comments, subtasks) OR act on one (add comment, change status, log time) via MCP
 /figma-rest  — Extract design context from Figma over the REST API (no MCP quota)
 /figma       — Extract design context from Figma (via the official MCP)
@@ -75,7 +75,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 
 | Use Case | Entry Point | Flow |
 |----------|-------------|------|
-| Project / page from a TDD | `/brainstorm` | /brainstorm → then the feature pipeline per PRD |
+| Whole project from a TDD | `/brainstorm` | /brainstorm → then the feature pipeline per PRD |
 | ClickUp → Feature | `/clickup` | /clickup → /clarify → /plan → /execute → /assess |
 | ClickUp → Bug | `/clickup` | /clickup → /fix → /assess |
 | Figma → Feature | `/figma-rest` | /figma-rest → /clarify → /plan → /execute → /figma-verify → /assess → /fix |
@@ -98,7 +98,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 
 | Skill | Purpose | Input Artifact | Output Artifact |
 |-------|---------|----------------|-----------------|
-| `/brainstorm` | Decompose a TDD into phases and self-contained PRDs | TDD / project brief | `docs/roadmap-{track}/` — PRDs, `README.md`, `status-log.md` |
+| `/brainstorm` | Decompose a whole project into a layered roadmap of reviewed, self-contained PRDs | `docs/tdd.md` | `docs/roadmap/`: PRDs, `README.md`, `status-log.md` |
 | `/clickup` | Ingest a ClickUp task (route to /clarify or /fix), or act on one (comment, status, time) via MCP | ClickUp task ID / URL, or an instruction | `clickup-context.md` + `clickup-images/` (ingest), or a ClickUp write (action) |
 | `/figma-rest` | Extract design context from Figma via the REST API (personal access token, no MCP quota) | Figma URL(s) or a Dev Mode prompt | `design-context.md` + `sections.json` + `figma-dumps/` + screenshots + assets |
 | `/figma` | Extract design context from Figma via MCP | Figma URL(s) | `design-context.md` + screenshots |
@@ -136,6 +136,7 @@ Run `/grill-me` between `/plan` and `/execute` when the plan looks thin or hides
 | `output-validator` | `/assess` | sonnet | Validates requirements coverage, edge cases, integration |
 | `code-reviewer` | `/assess` | sonnet | Reviews code quality against skill checklists |
 | `preflight-verifier` | `/preflight` | inherit | Verifies candidate findings for one layer against real code and measurements |
+| `prd-reviewer` | `/brainstorm` | sonnet | Fresh-context "Goldfish" review, one check per dispatch: structure, comprehension, antagonistic, readiness, roadmap consistency |
 
 **Direct build pattern:** `/execute` builds all files directly in the main context with full visibility across files. No agent dispatch during execution — standards are loaded via the Skill tool before each file type.
 

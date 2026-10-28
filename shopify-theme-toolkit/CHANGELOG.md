@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.7.0
+
+### Changed
+- **`/brainstorm` is for whole projects only.** Single pages and features go straight to the feature pipeline. Tracks (`docs/roadmap-{track}/`, one run per sprint doc) are removed: one project has one TDD (`docs/tdd.md`, the exported Google Doc) and one roadmap (`docs/roadmap/`).
+- **Layered roadmap:** foundation, shared components, shared sections, one phase per page (ending in a template PRD), integration. A page inventory and a section reuse matrix move anything used on two or more pages into a shared layer, so it is specified once.
+- **Two levels only** (phase folder, then PRDs), matching what the docs viewer can read. Large phases are split instead of nested.
+- **The TDD is read-only.** Decisions the TDD lacks or contradicts go in a "TDD updates needed" list in the roadmap README.
+- Gate 2 runs per phase, and the README is written after Gate 1, so a large project can be paused and resumed between phases.
+- `/grill-me` reads `docs/roadmap/`; docs-viewer docs and comments describe the single `docs/roadmap/` (already the viewer's default).
+- A TDD pasted into the conversation can be saved to `docs/tdd.md`, and an unfinished roadmap can be resumed at its first `PRDs pending` phase.
+- PRDs are 60 to 90 lines and name their interfaces (`render` parameters, setting IDs) so pages and shared work agree.
+
+### Fixed
+- **Docs board shows real progress.** The viewer reads the `## PRD Tracker` table that `/brainstorm` writes (Not Started, In Progress, Blocked, Done, Done with deviations), gathers each spec's deviation and blocker rows into its Status log tab, and adds In progress and Blocked filters. The older `✅ Complete` heading format still works. Before this, every brainstorm PRD showed "Not started".
+
+### Added
+- **`prd-reviewer` agent and Goldfish review** in `/brainstorm`, based on Google's Elephant-Goldfish Model. Reviewers get only file paths, never the conversation, and each runs one check:
+  - `structure`, before Gate 1: page inventory, reuse matrix and phases against the TDD
+  - per phase, three separate reviewers: `comprehension` (restate each PRD), `antagonistic` (gaps, hidden dependencies, missing Shopify states) and `readiness` (GO / NO-GO, including interfaces)
+  - `roadmap`: duplicated scope, matrix drift, dependencies and coverage
+  Max 2 review rounds; anything unresolved is listed in the README.
+
 ## 3.6.0 (proposed, vj-toolkit, on top of 3.5.0)
 
 Full write-up: [docs/improvements.md](docs/improvements.md). Preflight: [docs/preflight.md](docs/preflight.md). Next proposal: [docs/proposals/learnings.md](docs/proposals/learnings.md).

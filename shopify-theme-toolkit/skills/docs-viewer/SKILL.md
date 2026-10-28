@@ -32,8 +32,8 @@ per markdown document. Read-only; it never modifies project files.
    `projectName` and `stats`), then give the user the URL.
 
 `DOCS_DIR=/path/to/docs` overrides the docs location if a project keeps docs
-elsewhere. `ROADMAP_DIR=roadmap-pdp` points the board at a different track —
-see Tracks below.
+elsewhere. `ROADMAP_DIR=<folder>` points the board at a roadmap folder other than
+`docs/roadmap/`.
 
 No dependencies are installed — the markdown renderer is bundled inside this
 skill (`assets/vendor/marked.umd.js`). Fonts load from Google Fonts and fall
@@ -57,49 +57,32 @@ documents-only view; no status log → everything shows "Not started").
   - `<N>.<M>-<slug>.md` — one card per specification. Card metadata is read
     from a leading `# PRD: N.M — Title` heading and `**Priority:** /
     **Depends on:** / **Estimated scope:**` lines when present.
-- `docs/<roadmap>/status-log.md` — the single source of truth for delivery
-  status. A spec is "Delivered" iff the log contains an entry heading of the
-  exact form:
+- `docs/<roadmap>/status-log.md` is the single source of truth for delivery
+  status. The viewer reads it in either of two formats:
+  - **PRD Tracker table** (what `/brainstorm` writes): rows under a
+    `## PRD Tracker` heading with `PRD` and `Status` columns. Status is one of
+    `Not Started`, `In Progress`, `Blocked`, `Done`, `Done with deviations`;
+    anything else shows as "Not started". A `YYYY-MM-DD` in the `Date` column
+    becomes the completion date. Rows in other tables of the log with a `PRD`
+    column (deviations, blockers) are gathered into that spec's "Status log" tab.
+  - **Entry headings** (older format): a spec is delivered when the log has a
+    heading made of the date, `N.M Title` and `✅ Complete`, separated by em
+    dashes (the exact form older logs use). The entry's body becomes its tab. When
+    both formats name the same spec, the heading wins.
 
-  ```
-  ## YYYY-MM-DD — N.M Title — ✅ Complete
-  ```
-
-  The entry's body is shown in the reader under a "Status log" tab on that
-  spec's page.
+  The board shows each card as Delivered, In progress, Blocked or Not started,
+  and the filter bar filters by those.
 
 The page polls every 5 seconds and reads files fresh from disk on every
 request, so edits to any doc or the status log appear without restarting.
 
-## Tracks
+## Project roadmap
 
-A project with more than one roadmap keeps each in its own sibling folder, named
-`roadmap-<track>` — this is what `/brainstorm` produces:
-
-```
-docs/
-  tdds/
-  roadmap-homepage/
-  roadmap-navigation/
-```
-
-The viewer shows **one track at a time**. Run an instance per track, each on its
-own port:
-
-```bash
-ROADMAP_DIR=roadmap-homepage   DOCS_VIEWER_PORT=4488 node <path>/server.mjs
-ROADMAP_DIR=roadmap-navigation DOCS_VIEWER_PORT=4489 node <path>/server.mjs
-```
-
-A single board listing every track is not built yet.
-
-> **Status vocabulary.** This server reads delivery status from per-spec
-> `## YYYY-MM-DD — N.M Title — ✅ Complete` headings, giving two states:
-> delivered or not. `/brainstorm` scaffolds a `## PRD Tracker` table instead,
-> which supports `Not Started` / `In Progress` / `Blocked` / `Done` /
-> `Done with deviations` — **this server cannot read that format** and will show
-> every spec as "Not started". Until the table parser is merged in, either keep
-> the heading format in `status-log.md` or run a fork that parses the table.
+`/brainstorm` writes one roadmap per project to `docs/roadmap/`, the viewer's
+default, so no `ROADMAP_DIR` is needed. Its phases are layered (foundation,
+shared components, shared sections, one phase per page, integration), so each
+page shows as its own board column. PRDs sit directly inside each
+`phase-<N>-<slug>/` folder; the viewer does not read nested sub-phase folders.
 
 ## If a project's docs layout differs
 

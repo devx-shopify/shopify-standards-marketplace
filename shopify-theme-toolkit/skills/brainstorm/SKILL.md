@@ -1,291 +1,320 @@
 ---
 name: brainstorm
 description: >
-  Brainstorm a project from a brief into a structured roadmap of phases with
-  rich, self-contained PRDs. Conducts iterative back-and-forth conversation
-  about approach, logic, and decomposition, then produces a
-  docs/roadmap-{track}/ folder with arbitrarily nested phases. Each leaf-node PRD is detailed enough
-  to hand directly to a development pipeline. Use when a developer describes
-  a project idea and wants it decomposed into buildable units, or says
-  "brainstorm", "break this down", "create a roadmap", "plan this project",
-  or "decompose into phases".
-allowed-tools: Read, Write, Bash, Glob, Grep, AskUserQuestion, WebSearch, WebFetch, Agent, TaskCreate, TaskUpdate, TaskList
+  Brainstorm a whole Shopify theme project from its TDD (docs/tdd.md) into one
+  layered roadmap: foundation, shared components, shared sections, one phase
+  per page, and integration. Builds a page inventory and a section reuse
+  matrix so shared work is specified once, writes self-contained PRDs to
+  docs/roadmap/, then has fresh-context reviewers check every PRD before
+  handing over. Use only for a full project with multiple pages, when the
+  developer says "brainstorm", "break this project down", "create a roadmap"
+  or "plan this project". A single page or feature skips brainstorm and goes
+  straight to the feature pipeline.
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, WebSearch, WebFetch, Agent, TaskCreate, TaskUpdate, TaskList
 ---
 
-# Brainstorm — Project Decomposition into Phases & PRDs
+# Brainstorm: Project Decomposition into a Layered Roadmap
 
-You are entering the Brainstorm phase. Your job is to take a project brief, think through it deeply with the developer, and decompose it into a structured roadmap of phases — each leaf node being a rich, self-contained PRD that can be handed directly to a development pipeline.
+You are entering the Brainstorm phase. Your job is to take a project's TDD, think it through with the developer, and decompose the whole project into one roadmap of phases and self-contained PRDs that can each be handed to the feature pipeline.
 
-**This is the outer loop.** The developer will feed each PRD into their inner loop (clarify → plan → execute → assess → fix) one at a time. The quality of the final output depends entirely on how well you decompose and define each phase here.
+**This is the outer loop, and it is for whole projects only.** The developer feeds each PRD into the inner loop (figma → clarify → plan → execute → verify → assess → fix) one at a time. The quality of the final output depends on how well you decompose the project here.
 
 **Do NOT write code. Do NOT build anything. Only brainstorm, decompose, and produce PRDs.**
 
 ## Input
 
-The project brief: `$ARGUMENTS`
+- The TDD: `docs/tdd.md`. **Required.** It is the Markdown export of the project's Google Doc.
+- Optional notes from the developer: `$ARGUMENTS`
 
----
+## Fixed layout
 
-## Step 0: Resolve the Track
-
-A roadmap belongs to a **track** — one TDD, one track, one folder. Tracks sit side by side under `docs/`:
+One project, one TDD, one roadmap:
 
 ```
 docs/
-  tdds/
-    global-standards.md
-    homepage-sprint.md
-    pdp-sprint.md
-  roadmap-homepage/
-  roadmap-navigation/
-  roadmap-pdp/
+  tdd.md                          exported Google Doc (never edited by this skill)
+  roadmap/
+    README.md                     page inventory, section reuse matrix, phase tree,
+                                  execution order, TDD updates needed, open review findings
+    status-log.md
+    phase-1-foundation/
+      overview.md
+      1.1-{slug}.md               PRD
+    phase-2-shared-components/
+    phase-3-shared-sections/
+    phase-4-{page}/               one phase per page, in build order
+    ...
+    phase-{N}-integration/
 ```
 
-Resolve the track name in this order:
+`{ROADMAP}` below means `docs/roadmap`.
 
-1. An explicit track in `$ARGUMENTS` (e.g. `--track pdp`)
-2. Derived from the TDD filename you were handed, stripped of project prefix and document-type suffix — `amrutanjan-homepage-sprint.md` becomes `homepage`
-3. Ask the developer. Do not guess.
-
-**Everything below writes to `docs/roadmap-{track}/`.** This document abbreviates that path as `{ROADMAP}` from here on — substitute the resolved value every time.
-
-Run `Glob('docs/roadmap-*/README.md')` to list the tracks that already exist. A track that shares its name with an existing one is a revision of that track, not a new one — see Step 1.
+**Two levels only: phase folder, then PRD files.** Never nest sub-phase folders. The docs viewer only reads PRDs that sit directly inside a `phase-{N}-{slug}/` folder, so anything deeper is invisible on the board.
 
 ---
 
-## Step 1: Absorb the Brief
+## Step 0: Confirm This Is a Project
 
-1. If no arguments provided, ask the developer to describe their project.
+1. If the request is a single page, section or feature, stop and say so:
+   > Brainstorm is for whole projects. For a single page or feature, go straight to the pipeline: `/figma-rest` (if there is a design) → `/clarify` → `/plan` → `/execute` → `/figma-verify` → `/assess`.
+2. `Glob('docs/tdd.md')`. If it is missing:
+   - If the developer pasted the TDD into the conversation, offer to save it to `docs/tdd.md` exactly as pasted, then continue from that file.
+   - Otherwise stop and ask the developer to export the project's TDD Google Doc as Markdown to `docs/tdd.md`, or paste it here.
+   Do not brainstorm without it.
 
-2. Check if this track already has a roadmap:
-   - `Glob('{ROADMAP}/README.md')` — if found, read it
-   - Ask: "A roadmap already exists for the `{track}` track. Do you want to revise it, extend it, or start fresh?"
-   - If revising/extending, read the existing structure to understand what's there
-   - Never write into another track's folder, even when this track depends on its output
+---
 
-3. Scan the project codebase for context:
-   - `Glob('package.json')`, `Glob('*.config.*')`, `Glob('README.md')` — tech stack
-   - `Glob('src/**')` or similar — what's already built
-   - Only scan if a codebase exists. If this is a greenfield project, skip.
+## Step 1: Absorb the TDD and the Theme
 
-4. Check for design assets:
-   - If the developer mentions Figma, designs, or mockups, ask for the Figma file URL(s) upfront
-   - Ask which pages/frames in the file correspond to which parts of the project
-   - Track this mapping — it will be embedded in the PRDs for phases that have designs
-   - Not every phase will have a design. Backend work, config, infrastructure phases won't.
+1. **Read `docs/tdd.md` in full.** It is the source of truth for project-wide decisions. Note what it decides, what it implies, and what it leaves open.
 
-5. Identify what you know and what you don't. Separate:
-   - **Clear from the brief** — stated goals, constraints, tech choices
-   - **Implied** — obvious requirements not explicitly mentioned
-   - **Unknown** — things you need to explore before you can decompose
+2. **Treat the TDD as read-only.** Never edit `docs/tdd.md`. It is a copy of a Google Doc and the next export overwrites it. When brainstorming decides something the TDD does not cover, or contradicts it, record it for the **TDD updates needed** list in the roadmap README. The developer updates the Google Doc and re-exports.
+
+3. **Check for an existing roadmap.** `Glob('{ROADMAP}/README.md')`. If found, read it:
+   - If any phase is still marked `PRDs pending`, offer to **resume**: skip to Step 4 at the first pending phase.
+   - Otherwise ask: revise it, extend it, or start fresh? When revising, read the existing structure and keep PRD numbers stable where the scope did not change.
+
+4. **Scan the theme**, if one exists. Skip for a greenfield project.
+   - `layout/theme.liquid`, `config/settings_schema.json`: global setup and theme settings
+   - `templates/*.json`: which pages exist and which sections they use
+   - `sections/`, `snippets/`, `assets/`: what is already built and reusable
+   - `sections/*-group.json`: header and footer groups
+
+5. **Map the designs.** Get the Figma URL(s) from the TDD, or ask for them. Record which frames belong to which page and which section. Not every PRD has a design: config, data and integration work usually does not.
+
+6. **Separate what you know:**
+   - **Decided by the TDD:** stated goals, constraints, architecture
+   - **Implied:** requirements the TDD does not state but clearly needs
+   - **Open:** what you must explore with the developer before you can decompose
 
 ---
 
 ## Step 2: Research
 
-Before brainstorming with the developer, arm yourself with informed opinions.
+Research before asking questions, so you bring informed trade-offs instead of a questionnaire.
 
-**When to research:**
-- The project involves technologies or platforms you should understand deeply
-- The brief mentions patterns or architectures worth investigating
-- You need to understand what's feasible before asking about approach
-
-**How to research:**
-- Use `WebSearch` for domain-specific knowledge, common architectures, known challenges
-- Use `WebFetch` to read full documentation pages, not just search snippets
-- Dispatch an `Agent` for parallel research if the project spans multiple domains
-
-**When NOT to research:**
-- The brief is clear, the tech stack is familiar, and the scope is well-defined
-- The project is small enough that research would be overkill
-
-The goal is to bring something to the brainstorming — informed trade-offs, relevant constraints, common pitfalls. Not generic questions.
+- Research when the project uses apps, APIs, metafield or metaobject patterns, or Shopify features you should understand deeply.
+- Use `WebSearch` for known patterns and pitfalls, and `WebFetch` to read the full documentation page.
+- Dispatch an `Agent` for parallel research when the project spans several domains.
+- Skip research when the TDD is clear and the stack is familiar.
 
 ---
 
-## Step 3: Brainstorm (Iterative)
+## Step 3: Page Inventory and Section Reuse Matrix
 
-This is the core of the skill. You and the developer think through the project together.
+This step decides what is shared and what belongs to one page. It prevents the same section from being specified more than once.
 
-### How to brainstorm
+### 3a. Page inventory
 
-**Open with your understanding.** Present what you know about the project scope, informed by the brief and your research. Identify 3-5 key dimensions that need exploration — these are the areas where decisions will shape the phase structure.
+List every template the project touches, for example `index`, `product`, `collection`, `list-collections`, `cart`, `search`, `page.about`, `page.contact`, `blog`, `article`, `customers/*`, `404`, `password`. For each one record its purpose, its Figma frames, and whether it is new or a change to an existing template.
 
-**Explore one dimension at a time.** Don't dump all questions at once. Pick the most foundational dimension first — the one whose answer affects everything else. Ask probing, specific questions informed by your research.
+### 3b. Section reuse matrix
 
-Good: "You mentioned event tracking for GA4 and Meta. GA4 uses a dataLayer push model while Meta uses a pixel-based approach — they have different initialization patterns. Should both fire from the same trigger points, or do you want independent event pipelines?"
-
-Bad: "What are the requirements for event tracking?"
-
-**Synthesize after each response.** After the developer answers, state back what you understood and what it implies for the project structure. Then move to the next dimension.
-
-**Propose a draft tree after 2-3 dimensions.** Don't wait until every question is answered. Show an early phase tree so the developer can see where the conversation is heading. This makes the brainstorming concrete.
-
-**Use `AskUserQuestion` only for concrete choices.** When there are 2-3 clear architectural options with distinct trade-offs, use structured choices. For everything else, use conversation.
-
-### Gate 1: Approve the high-level structure
-
-Once the major phases are identified, present the top-level tree (without sub-phase nesting) and ask for explicit approval using `AskUserQuestion`:
-- **Approve this structure** — move to deepening each phase into sub-phases
-- **Adjust some phases** — developer gives feedback, you revise and re-present
-- **Keep brainstorming** — more dimensions to explore
-
-This gate approves WHAT the major phases are. Do NOT move past it without approval.
-
----
-
-## Step 4: Deepen the Tree
-
-Now take each approved top-level phase and determine if it needs sub-phases.
-
-**A phase needs sub-phases when:**
-- It would produce a PRD longer than 60 lines
-- It involves more than one distinct technical concern
-- It has natural sequential stages that should be verified independently
-
-**A phase is a leaf node when:**
-- It can be described in a single 40-60 line PRD
-- It has a clear single responsibility
-- A developer could pick it up without needing to "decide where to start"
-
-Apply this recursively. Sub-phases can have their own sub-phases if needed.
-
-### Gate 2: Approve the full tree with nesting
-
-Present the complete tree — all phases, sub-phases, and leaf nodes — to the developer. This gate approves the FULL decomposition, including nesting depth and what each leaf node covers. Do NOT proceed to execution order or PRD generation without approval.
-
-**For small projects (5 or fewer leaf PRDs):** Skip nesting. Use a flat structure — just numbered PRDs directly under `{ROADMAP}/`.
-
-**For large projects (20+ leaf PRDs):** Suggest grouping into major tracks (e.g., "Backend", "Frontend", "Infrastructure") as top-level phases. Each track gets its own sub-phases.
-
----
-
-## Step 5: Execution Order & Dependencies
-
-For each leaf node, determine:
-- **What must be done before it** — upstream dependencies
-- **What it unblocks** — downstream phases
-- **What can run in parallel** — independent work streams
-
-Build the execution order. Present it as a numbered sequence with parallel groups:
+Rows are sections, columns are pages. Mark every page a section appears on. Use the designs, the TDD and the existing `templates/*.json`.
 
 ```
-1. Phase 1.1 (no dependencies)
-2. Phase 1.2 (depends on 1.1)
-3. Phase 2.1 + Phase 2.2 (parallel, both depend on 1.2)
-4. Phase 2.3 (depends on 2.1 and 2.2)
+| Section              | home | collection | product | cart | about | Layer        |
+|----------------------|------|------------|---------|------|-------|--------------|
+| featured-collection  |  x   |            |    x    |      |       | shared       |
+| testimonials         |  x   |            |         |      |   x   | shared       |
+| product-main         |      |            |    x    |      |       | product page |
 ```
 
-Confirm with the developer. The execution order goes into the README.md.
+Then classify every piece of work into a layer:
+
+| Layer | What goes in it |
+|---|---|
+| **Foundation** | Design tokens, global CSS and JS, `layout/theme.liquid`, `config/settings_schema.json`, header and footer groups, cart drawer or other global UI, metafield and metaobject definitions, app embeds |
+| **Shared components** | Snippets used on 2 or more pages: product card, price, badges, icons, buttons, media, forms |
+| **Shared sections** | Sections that appear on 2 or more templates |
+| **Page phases** | Sections that appear on exactly one template, plus that page's template JSON |
+| **Integration** | Cross-page flows (navigation, search to product to cart), analytics, accessibility and performance passes |
+
+**The rule:** anything used on two or more pages moves out of the page phases into a shared layer. A page PRD never re-specifies shared work. It references the shared PRD by path.
+
+### 3c. Brainstorm the open questions
+
+Explore the open questions from Step 1, one dimension at a time. Start with the most foundational, the one whose answer changes the structure.
+
+Good: "The TDD says the product card shows a swatch row, but the collection design shows swatches only on hover. Should the shared product card own the swatch logic with a setting, or does the collection page need its own variant?"
+
+Bad: "What are the requirements for the product card?"
+
+After each answer, state back what you understood and what it changes in the structure. Use `AskUserQuestion` only for concrete choices between 2 to 4 options; use conversation for everything else.
+
+### Structure review
+
+Before Gate 1, write a draft `{ROADMAP}/README.md` from the template with the page inventory, the reuse matrix (PRD column `pending`), the phase list with every phase marked `PRDs pending`, and any TDD updates found so far.
+
+Dispatch one reviewer with `Check: structure` (see Step 9a for how to dispatch), giving it only the README and TDD paths. Fix clear-cut findings; bring design questions to the developer. Present the remaining findings at Gate 1.
+
+### Gate 1: Approve the structure
+
+Present:
+- the page inventory
+- the section reuse matrix with layers
+- the phase list (foundation, shared components, shared sections, each page in build order, integration)
+- any TDD updates found so far
+- the structure review result
+
+Ask with `AskUserQuestion`: **Approve**, **Adjust**, or **Keep brainstorming**. Do not move on without approval. After an adjustment, update the README and present again.
+
+The approved README stays on disk with every phase `PRDs pending`. This lets a large project be paused and resumed between phases.
+
+---
+
+## Step 4: Deepen One Phase at a Time
+
+Take each approved phase in order and split it into PRDs.
+
+**A PRD is right-sized when:**
+- it fits in a 60 to 90 line PRD
+- it has one clear responsibility, usually one section, one snippet family, or one global concern
+- a developer can pick it up without deciding where to start
+
+**If a phase needs more than about 8 PRDs,** split it into two phases (for example `phase-6-product-core` and `phase-7-product-extras`) instead of nesting.
+
+**Every page phase ends with a template PRD** that assembles the page's template file: section order, default content, and the settings each section needs on that page. Usually that is `templates/{page}.json`; customer pages live at `templates/customers/{page}.json`, and `gift_card` is `templates/gift_card.liquid`, not JSON.
+
+### Gate 2: Approve each phase
+
+Present the phase's PRD list, one line per PRD, and get approval before moving to the next phase. Update the README after each approved phase, including the PRD numbers in the reuse matrix. The developer can stop after any phase and resume later; on resume, read the README and continue from the first phase still marked `PRDs pending`.
+
+---
+
+## Step 5: Execution Order
+
+Order the PRDs across the whole project:
+
+- foundation first, then shared components, then shared sections, then pages, then integration
+- within that, a PRD comes after everything it depends on
+- mark what can run in parallel (pages are usually parallel to each other once the shared layers are done)
+
+```
+1. 1.1 design-tokens (no dependencies)
+2. 1.2 theme-layout (depends on 1.1)
+3. 2.1 product-card + 2.2 price (parallel, both depend on 1.1)
+4. 3.1 featured-collection (depends on 2.1)
+```
+
+Confirm with the developer.
 
 ---
 
 ## Step 6: Generate PRDs
 
-Once the tree, nesting, and execution order are all confirmed:
-
-1. **Create the directory structure** before writing any files:
+1. Create every phase folder in one command:
    ```bash
-   mkdir -p {ROADMAP}/phase-1-{name} {ROADMAP}/phase-2-{name} ...
+   mkdir -p docs/roadmap/phase-1-foundation docs/roadmap/phase-2-shared-components ...
    ```
-   Create all phase folders (and nested sub-phase folders) in one command.
 
-2. Use `TaskCreate` to create one task per leaf-node PRD — gives the developer visibility into generation progress.
+2. Use `TaskCreate` to create one task per PRD, so the developer sees progress.
 
-3. For each leaf node, in execution order:
-   - Read the PRD template from `${CLAUDE_SKILL_DIR}/templates/prd-template.md`
-   - Fill it in with the specific context for that leaf node
-   - **Design Reference** — if this phase has a corresponding Figma design (from the mapping captured in Step 1), include the Figma URLs and frame references. If no design exists for this phase, omit the Design Reference section entirely.
-   - The **Context** section is critical — it must describe what exists when this phase starts, referencing prior phases by their file paths
-   - The **Approach** section must be specific — name technologies, patterns, architectural direction
-   - The **Acceptance Criteria** must be verifiable — a developer can check each item off
-   - Write the PRD to its correct path in `{ROADMAP}/`
-   - Update the task to completed
+3. For each PRD, in execution order:
+   - Read `${CLAUDE_SKILL_DIR}/templates/prd-template.md` and fill it in.
+   - **Design Reference:** include the Figma URLs and frames when the PRD has a design; omit the section otherwise.
+   - **Context:** what exists when this PRD starts, with prior PRDs referenced by path. A page PRD names every shared PRD it uses, by path.
+   - **Approach:** specific. Name the section and snippet files, schema settings, blocks, metafields, and patterns.
+   - **Acceptance Criteria:** verifiable, including empty and blank-setting states.
+   - **Interfaces:** a shared snippet PRD names its `render` parameters; a shared section PRD names the setting IDs and blocks pages can configure. Page PRDs use exactly those names.
+   - Write it to `{ROADMAP}/phase-{N}-{slug}/{N}.{M}-{slug}.md` and mark the task complete.
 
-4. For each non-leaf phase (folder with sub-phases):
-   - Read the overview template from `${CLAUDE_SKILL_DIR}/templates/overview-template.md`
-   - Fill in the phase purpose, sub-phase table, and shared context
-   - Write to `{ROADMAP}/{phase-folder}/overview.md`
+4. For each phase, fill `${CLAUDE_SKILL_DIR}/templates/overview-template.md` and write `{ROADMAP}/phase-{N}-{slug}/overview.md`.
 
-### File naming conventions
+### Naming
 
-- Phase folders: `phase-{N}-{kebab-name}/` (e.g., `phase-1-foundation/`)
-- Leaf PRDs: `{N.N}-{kebab-name}.md` (e.g., `1.1-project-setup.md`)
-- Nested phase folders: `{N.N}-{kebab-name}/` (e.g., `1.2-auth-system/`)
-- Overview files: `overview.md` (inside non-leaf phase folders)
-- Phase numbering follows tree: 1, 1.1, 1.1.1, etc.
-
-### Flat structure (small projects)
-
-When the project has 5 or fewer leaf PRDs and no nesting:
-
-```
-docs/roadmap-{track}/
-├── README.md
-├── status-log.md
-├── 1-{name}.md
-├── 2-{name}.md
-├── 3-{name}.md
-```
-
-No phase folders, no overview files.
+- Phase folders: `phase-{N}-{kebab-name}/`, for example `phase-4-home/`
+- PRDs: `{N}.{M}-{kebab-name}.md`, for example `4.2-hero-slider.md`
+- Every phase has an `overview.md`
+- All names are kebab-case
 
 ---
 
-## Step 7: Generate README.md
+## Step 7: Finish README.md
 
-Read the README template from `${CLAUDE_SKILL_DIR}/templates/readme-template.md`.
+Complete `{ROADMAP}/README.md` from `${CLAUDE_SKILL_DIR}/templates/readme-template.md`:
 
-Fill in:
-- **Project name and overview** — from the brief and brainstorming
-- **Phase tree** — ASCII representation of the full structure, leaf nodes marked with `[PRD]`
-- **Execution order table** — numbered sequence with dependencies and parallel indicators
-- **Start here pointer** — path to the first PRD in execution order
-
-Write to `{ROADMAP}/README.md`.
+- project overview from the TDD
+- page inventory and section reuse matrix (from Step 3), with every PRD number filled in
+- phase tree, every PRD marked `[PRD]`
+- execution order table
+- **TDD updates needed:** every decision made here that the TDD does not contain or contradicts, each with the TDD section it belongs in. Write `None` if there are none.
+- start-here pointer to the first PRD
 
 ---
 
 ## Step 8: Scaffold the Status Log
 
-Read the status-log template from `${CLAUDE_SKILL_DIR}/templates/status-log-template.md` and write it to `{ROADMAP}/status-log.md`.
+Fill `${CLAUDE_SKILL_DIR}/templates/status-log-template.md` and write `{ROADMAP}/status-log.md`: one `### Phase N - Name` section per phase and one row per PRD in execution order, every row `Not Started`.
 
-Fill in one `### Phase N — Name` section per phase, and one row per leaf PRD in execution order, with:
+**The status vocabulary is fixed:** `Not Started` / `In Progress` / `Blocked` / `Done` / `Done with deviations`.
 
-- `#` — sequential position in the execution order
-- `PRD` — the PRD number and kebab slug, e.g. `2.4 shop-by-lifestyle`
-- `Depends on` — upstream PRD numbers, or `—`
-- `Status` — **`Not Started`** for every row at generation time
-- `Date` / `Notes` — `—`
-
-Leave the Deviations and Blocker tables empty; they fill in during execution.
-
-**The status vocabulary is fixed**: `Not Started` / `In Progress` / `Blocked` / `Done` / `Done with deviations`. The docs board matches these exactly and renders anything else as "Not started".
-
-This file is the delivery record for the track. Nothing in the pipeline writes to it automatically — the developer updates a row when a PRD moves.
+Nothing in the pipeline writes to this file automatically. The developer updates a row when a PRD moves, and the docs board (`/docs-viewer`) shows that status on the PRD's card.
 
 ---
 
-## Step 9: Report to Developer
+## Step 9: Goldfish Review
+
+You held the whole brainstorm in your head, so you cannot see what the files leave unsaid. Reviewers with no context can. They read only the files, and each runs one check, so no reviewer's view shapes another's.
+
+### 9a. Dispatch reviewers
+
+For every reviewer, use `subagent_type: "shopify-theme-toolkit:prd-reviewer"` if available; otherwise `general-purpose` with the full contents of `${CLAUDE_SKILL_DIR}/../../agents/prd-reviewer.md` pasted as its instructions.
+
+Dispatch **all reviewers in one message** so they run in parallel:
+- for each phase, three reviewers: `Check: comprehension`, `Check: antagonistic`, `Check: readiness`
+- one more with `Check: roadmap`, for cross-PRD consistency
+
+That is three reviewers per phase plus one, for example 25 for an 8-phase project. Tell the developer the count before dispatching.
+
+Give each reviewer **only the check and paths**, never a summary of the conversation or your intentions:
+
+```
+Check: antagonistic
+Phase folder: docs/roadmap/phase-4-home/
+Roadmap README: docs/roadmap/README.md
+TDD: docs/tdd.md
+```
+
+```
+Check: roadmap
+Roadmap folder: docs/roadmap/
+Roadmap README: docs/roadmap/README.md
+TDD: docs/tdd.md
+```
+
+If a reviewer fails or times out, do not review its PRDs yourself. Re-dispatch it once; if it fails again, list its check and phase under **Open review findings** as `not reviewed`.
+
+### 9b. Use the results
+
+1. **Comprehension:** compare each restatement with what was agreed with the developer. A mismatch means the PRD is ambiguous; rewrite the unclear part.
+2. **Antagonistic findings:** fix clear-cut problems yourself (a missing path, an unlisted dependency, an unverifiable criterion). A finding that needs a design decision goes to the developer with `AskUserQuestion`. Never resolve a design question silently.
+3. **Readiness:** every PRD marked `NO-GO` must be fixed or explicitly accepted by the developer.
+4. **Roadmap findings:** fix duplicated scope, matrix drift and broken dependencies; ask the developer when the fix changes the structure.
+5. **Re-review** only what you changed: for each phase with changed PRDs, dispatch the same three checks with a `PRDs:` line listing the changed PRD numbers. Re-run the `roadmap` check only if a change touched dependencies, shared scope or the matrix. **Stop after 2 rounds.** Anything still open goes in the README's **Open review findings** section.
+6. New decisions from the review that belong in the TDD go in **TDD updates needed**.
+
+---
+
+## Step 10: Report to the Developer
 
 Tell the developer:
-- Where the roadmap was saved (`{ROADMAP}/`)
-- Count of phases and PRDs generated
-- The file tree of what was created
-- Path to README.md as the entry point, and that `status-log.md` starts with every PRD at `Not Started`
+- the roadmap is in `docs/roadmap/`, with the count of phases and PRDs
+- the file tree of what was created
+- the review result: reviewers dispatched, rounds run, findings fixed, findings still open
+- the **TDD updates needed** list, so they can update the Google Doc and re-export it
+- that `status-log.md` starts with every PRD at `Not Started`
 
 Then:
 ```
-Start here: {ROADMAP}/{path-to-first-prd}
+Start here: docs/roadmap/{path-to-first-prd}
 
-Hand each PRD to your development pipeline one at a time, following the
-execution order in README.md. Each PRD is self-contained — it has full
-context, requirements, approach, and acceptance criteria.
+Hand each PRD to the pipeline one at a time, in the execution order in README.md.
 
-For PRDs with a Design Reference section:
-  /figma [URLs from the PRD] → /clarify [PRD path] → /plan → /execute → /compare → /assess
+With a Design Reference:
+  /figma-rest [URLs from the PRD] → /clarify [PRD path] → /plan → /execute → /figma-verify → /assess
 
-For PRDs without a design:
+Without a design:
   /clarify [PRD path] → /plan → /execute → /assess
 ```
 
@@ -295,23 +324,26 @@ For PRDs without a design:
 
 ## Rules
 
-### Brainstorming
-- Research before asking questions — no generic questionnaires
-- Explore one dimension at a time — don't overwhelm the developer
-- Synthesize after each response — state back what you understood
-- Propose a draft tree early — make the conversation concrete
-- Never write files during brainstorming — only after tree approval
+### Scope
+- Whole projects only. Single pages and features go to the pipeline.
+- `docs/tdd.md` is required and read-only. Gaps and contradictions go in **TDD updates needed**.
 
-### PRDs
-- Every leaf-node PRD must be 40-60 lines. If it exceeds 60, the scope is too large — decompose further
-- Every PRD must be self-contained. A developer who reads only that file should know: what to build, why, how, what exists already, and what success looks like
-- The Context section must reference prior phases by their file paths
-- The Approach section must be specific — name technologies, patterns, architectural direction. Not vague.
-- Acceptance Criteria must be verifiable — checkboxes a developer can check off
+### Brainstorming
+- Research before asking. No generic questionnaires.
+- One dimension at a time, and state back what you understood after each answer.
+- Write no files before the structure review. Until PRD generation, write only `docs/tdd.md` (a pasted TDD, with permission) and the README.
 
 ### Structure
-- Phase numbering follows the tree: 1, 1.1, 1.1.1
-- All folder and file names are kebab-case
-- If `{ROADMAP}/` already exists, ask before overwriting — and never write into a different track's folder
-- Small projects (5 or fewer PRDs): flat structure, no nesting
-- Large projects (20+ PRDs): suggest grouping into tracks
+- Layers in this order: foundation, shared components, shared sections, pages, integration.
+- Anything used on two or more pages lives in a shared layer and is specified once.
+- Two levels only: phase folder, then PRDs. Split a phase instead of nesting.
+- Every page phase ends with a template PRD.
+- If `docs/roadmap/` exists, ask before overwriting.
+
+### PRDs
+- 60 to 90 lines each. Longer means the scope is too large: split it.
+- Self-contained: a developer who reads only that file knows what to build, why, how, what exists already, and what success looks like.
+- Context references prior and shared PRDs by path.
+- Acceptance criteria are verifiable checkboxes.
+- Shared PRDs name their interfaces (`render` parameters, setting IDs); page PRDs use exactly those names.
+- No PRD reaches the developer without the Goldfish review.
